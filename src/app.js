@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
   res.json("Personal Acount App Node Js");
 });
 // app.use("/user", userRouter);
-app.use("/api/users/", userRouter);
+app.use("/api/users", userRouter);
 app.use("/api/transection", transactionRouter);
 app.use("/api/bank", bankRouter);
 app.use("/api/cash", cashRouter);
