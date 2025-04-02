@@ -1,9 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/apiResponce.js";
 import { Transaction } from "../models/transaction.model.js";
 import Cash from "../models/cash.model.js";
 import Bank from "../models/bank.model.js";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../utils/apiErrors.js";
 
 const getTransaction = asyncHandler(async (req, res) => {
   const transaction = await Transaction.find().populate("bank_id");
@@ -55,10 +55,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Cash account can not be negative");
+          throw new ApiError(400, "Cash account can not be negative");
         }
         cashAccount.amount =
           parseFloat(cashAccount.amount) +
@@ -70,10 +70,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           session
         );
         if (!bankAmount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Bank account can not be negative");
+          throw new ApiError(400, "Bank account can not be negative");
         }
 
         bankAmount.balance =
@@ -86,10 +86,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Cash account can not be negative");
+          throw new ApiError(400, "Cash account can not be negative");
         }
 
         cashAccount.amount =
@@ -102,10 +102,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           session
         );
         if (!bankAmount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Bank account can not be negative");
+          throw new ApiError(400, "Bank account can not be negative");
         }
 
         bankAmount.balance =
@@ -122,8 +122,9 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     //   message: "Transaction Updated",
     //   success: true,
     // });
-    return res.status(201).json(new ApiResponse(200, "", "Transaction Updated"));
-
+    return res
+      .status(201)
+      .json(new ApiResponse(200, "", "Transaction Updated"));
   } else {
     // Create a new transaction
     const transaction = await Transaction.create(
@@ -146,10 +147,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Cash account can not be negative");
+          throw new ApiError(400, "Cash account can not be negative");
         }
 
         cashAccount.amount =
@@ -160,10 +161,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           session
         );
         if (!bankAmount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Bank account can not be negative");
+          throw new ApiError(400, "Bank account can not be negative");
         }
 
         bankAmount.balance =
@@ -174,10 +175,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Cash account can not be negative");
+          throw new ApiError(400, "Cash account can not be negative");
         }
 
         cashAccount.amount =
@@ -188,10 +189,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           session
         );
         if (!bankAmount) {
-          throw new ApiError(400,"Cash account not found");
+          throw new ApiError(400, "Cash account not found");
         }
         if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
-          throw new ApiError(400,"Bank account can not be negative");
+          throw new ApiError(400, "Bank account can not be negative");
         }
 
         bankAmount.balance =
@@ -207,4 +208,9 @@ const addEditTransaction = asyncHandler(async (req, res) => {
   }
 });
 
-export { getTransaction, getTransactionById, getRecentTransaction,addEditTransaction };
+export {
+  getTransaction,
+  getTransactionById,
+  getRecentTransaction,
+  addEditTransaction,
+};
