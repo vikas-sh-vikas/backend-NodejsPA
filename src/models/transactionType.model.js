@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const categorySchema = new mongoose.Schema(
+const transactionTypeSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -28,7 +28,8 @@ const categorySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-const Category =
-  mongoose.models.categorys || mongoose.model("categorys", categorySchema);
+const TransectionType =
+  mongoose.models.transaction_types ||
+  mongoose.model("transaction_types", transactionTypeSchema);
 
-export default Category;
+export default TransectionType;

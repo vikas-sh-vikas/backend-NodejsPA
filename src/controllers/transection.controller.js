@@ -4,16 +4,27 @@ import { Transaction } from "../models/transaction.model.js";
 import Cash from "../models/cash.model.js";
 import Bank from "../models/bank.model.js";
 import { ApiError } from "../utils/apiErrors.js";
+import mongoose from "mongoose";
 
 const getTransaction = asyncHandler(async (req, res) => {
-  const transaction = await Transaction.find().populate("bank_id");
+  const transaction = await Transaction.find().populate([
+    { path: "bank" },
+    { path: "category" },
+    { path: "transection_type" },
+    { path: "payment_type" },
+  ]);
   return res
     .status(201)
     .json(new ApiResponse(200, transaction, "Transaction list retrive"));
 });
 const getTransactionById = asyncHandler(async (req, res) => {
-  const reqBody = await request.json();
-  const transaction = await Transaction.findOne({ _id: reqBody.id });
+  const reqBody = await req.body;
+  const transaction = await Transaction.findOne({ _id: reqBody._id }).populate([
+    { path: "bank" },
+    { path: "category" },
+    { path: "transection_type" },
+    { path: "payment_type" },
+  ]);
   if (!transaction) {
     return NextResponse.json({
       message: "Transaction Not Found",
@@ -25,23 +36,26 @@ const getTransactionById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, transaction, "Transaction Found"));
 });
 const getRecentTransaction = asyncHandler(async (req, res) => {
+  const { count } = await req.body;
   const transaction = await Transaction.find()
-    .populate("bank_id")
+    .populate("bank")
     .sort({ createdAt: -1 }) // Sort by createdAt in descending order (newest first)
-    .limit(5); // Limit to 10 results;
+    .limit(count); // Limit to 10 results;
   return res
     .status(201)
     .json(new ApiResponse(200, transaction, "Transaction Found"));
 });
 const addEditTransaction = asyncHandler(async (req, res) => {
-  const reqBody = await request.json();
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  const reqBody = await req.body;
   const {
     _id,
-    type,
     amount,
-    category_id,
-    payment_method,
-    bank_id,
+    category,
+    transection_type,
+    payment_type,
+    bank,
     date,
     description,
   } = reqBody;
@@ -131,20 +145,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       [
         {
           _id,
-          type,
           amount,
-          category_id,
-          payment_method,
-          bank_id,
+          category,
+          transection_type,
+          payment_type,
+          bank,
           date,
           description,
         },
-      ],
-      { session }
+      ]
+      // { session }
     );
-    if (type === "debit") {
+    if (transection_type === "debit") {
       // Update Cash balance if payment method is "cash"
-      if (payment_method === "cash") {
+      if (payment_type === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -156,7 +170,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         cashAccount.amount =
           parseFloat(cashAccount.amount) - parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method == "bank") {
+      } else if (payment_type == "bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );
@@ -171,8 +185,8 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           parseFloat(bankAmount.balance) - parseFloat(amount);
         await bankAmount.save({ session });
       }
-    } else if (type === "credit") {
-      if (payment_method === "cash") {
+    } else if (transection_type === "credit") {
+      if (payment_type === "cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -184,7 +198,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         cashAccount.amount =
           parseFloat(cashAccount.amount) + parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method == "bank") {
+      } else if (payment_type == "bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );

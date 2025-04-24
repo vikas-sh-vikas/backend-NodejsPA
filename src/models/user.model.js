@@ -1,9 +1,10 @@
 import mongoose, { Schema, Types } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
 const userSchema = new Schema(
   {
-    username: {
+    user_name: {
       type: String,
       required: true,
       unique: true,
@@ -18,18 +19,33 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
     },
-    fullName: {
+    full_name: {
       type: String,
       required: true,
       trim: true,
       index: true,
     },
-    profilepic: {
+    profile_picture: {
       type: String,
     },
     password: {
       type: String,
       required: [true, "Password is required"],
+    },
+    created_on: {
+      type: Date,
+    },
+    created_by: {
+      type: Schema.Types.ObjectId,
+    },
+    is_deleted: {
+      type: Boolean,
+    },
+    deleted_by: {
+      type: Schema.Types.ObjectId,
+    },
+    deleted_on: {
+      type: Date,
     },
   },
   {
@@ -52,8 +68,8 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
-      fullName: this.fullName,
+      user_name: this.user_name,
+      full_name: this.full_name,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -66,8 +82,8 @@ userSchema.methods.generateRefreshToken = async function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
-      fullName: this.fullName,
+      user_name: this.user_name,
+      full_name: this.full_name,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
@@ -75,4 +91,4 @@ userSchema.methods.generateRefreshToken = async function () {
     }
   );
 };
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model("users", userSchema);

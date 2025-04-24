@@ -1,49 +1,65 @@
-import mongoose,{Schema}from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import Bank from "../models/bank.model.js";
-
-const transactionSchema = new Schema({
-  type: {
-    type: String,
-    required: [true, "Please provide type"],
-    // unique: true,
+import Category from "./category,model.js";
+import TransectionType from "./transactionType.model.js";
+import PaymentType from "./paymentType.model.js";
+const transactionSchema = new Schema(
+  {
+    amount: {
+      type: String,
+      required: [true, "Please provide amount"],
+      // unique: true,
+    },
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: Category,
+      required: true,
+    },
+    transection_type: {
+      type: Schema.Types.ObjectId,
+      ref: TransectionType,
+      required: true,
+    },
+    payment_type: {
+      type: Schema.Types.ObjectId,
+      ref: PaymentType,
+      required: true,
+    },
+    bank: {
+      type: Schema.Types.ObjectId,
+      ref: Bank,
+      required: true,
+    },
+    date: {
+      type: Date,
+      // required: [true, "Please provide date"],
+      // unique: true,
+    },
+    description: {
+      type: String,
+      // required: [true, "Please provide description"],
+      // unique: true,
+    },
+    created_on: {
+      type: Date,
+    },
+    created_by: {
+      type: Schema.Types.ObjectId,
+    },
+    is_deleted: {
+      type: Boolean,
+    },
+    deleted_by: {
+      type: Schema.Types.ObjectId,
+    },
+    deleted_on: {
+      type: Date,
+    },
   },
-  amount: {
-    type: String,
-    required: [true, "Please provide amount"],
-    // unique: true,
-  },
-  category_id: {
-    type: Number,
-    required: [true, "Please provide a category"],
-    // unique: true,
-  },
-  payment_method: {
-    type: String,
-    required: [true, "Please provide a payment method"],
-    // unique: true,
-  },
-  bank_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: Bank,
-    required: false,
-    default: null,
-    set: (value) => (value === "" ? null : value), // Convert empty string to null
-  },
-  date: {
-    type: Date,
-    required: [true, "Please provide date"],
-    // unique: true,
-  },
-  description: {
-    type: String,
-    required: [true, "Please provide description"],
-    // unique: true,
-  },
-},
-{ timestamps: true }
+  { timestamps: true }
 );
 // const Transaction =
 //   mongoose.models.transactions ||
 //   mongoose.model("transaction", transactionSchema);
-export const Transaction = mongoose.model("Transaction", transactionSchema)
+export const Transaction = mongoose.model("Transaction", transactionSchema);
 // export default Transaction;

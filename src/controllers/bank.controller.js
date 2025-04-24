@@ -10,8 +10,8 @@ const getBanks = asyncHandler(async (req, res) => {
   return res.status(201).json(new ApiResponse(200, bank, "Bank list retrive"));
 });
 const getBankById = asyncHandler(async (req, res) => {
-  const reqBody = await request.json();
-  const bank = await Bank.findOne({ _id: reqBody.id });
+  const reqBody = await req.body;
+  const bank = await Bank.findOne({ _id: reqBody._id });
 
   if (!bank) {
     return new ApiError(400, "Bank Not Found");
@@ -21,16 +21,25 @@ const getBankById = asyncHandler(async (req, res) => {
 const totalBankBalace = asyncHandler(async (req, res) => {
   const banks = await Bank.find();
   const totalBalance = banks.reduce(
-    (total, bank) => total + parseFloat(bank.balance),
+    (total, bank) => total + parseFloat(bank.current_balance),
     0
   );
   return res
     .status(201)
-    .json(new ApiResponse(200, totalBalance, "Transaction Found"));
+    .json(new ApiResponse(200, totalBalance, "Total Balance"));
 });
 const addEditBanks = asyncHandler(async (req, res) => {
-  const reqBody = await request.json();
-  const { _id, name, balance, address, deposit, withdraw } = reqBody;
+  const reqBody = await req.body;
+  const {
+    _id,
+    bank_name,
+    branch,
+    current_balance,
+    opening_balance,
+    address,
+    iFsc_code,
+    user_master,
+  } = reqBody;
   //add customer
   if (_id) {
     // Find the existing bank entry
@@ -80,9 +89,13 @@ const addEditBanks = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(200, "", "Bank Updated"));
   } else {
     const bank = await Bank.create({
-      name,
-      balance,
+      bank_name,
+      branch,
+      current_balance,
+      opening_balance,
       address,
+      iFsc_code,
+      user_master,
     });
     return res.status(201).json(new ApiResponse(200, "", "Bank Saved"));
   }

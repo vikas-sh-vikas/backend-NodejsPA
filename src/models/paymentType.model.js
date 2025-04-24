@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const categorySchema = new mongoose.Schema(
+const paymentTypeSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -28,7 +28,8 @@ const categorySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-const Category =
-  mongoose.models.categorys || mongoose.model("categorys", categorySchema);
+const PaymentType =
+  mongoose.models.payment_types ||
+  mongoose.model("payment_types", paymentTypeSchema);
 
-export default Category;
+export default PaymentType;

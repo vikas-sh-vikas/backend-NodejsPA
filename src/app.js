@@ -20,6 +20,9 @@ import userRouter from "./routes/user.routes.js";
 import transactionRouter from "./routes/transection.routes.js";
 import bankRouter from "./routes/bank.routes.js";
 import cashRouter from "./routes/cash.routes.js";
+import categoryRouter from "./routes/category.routes.js";
+import transectionTypeRouter from "./routes/transectionType.routes.js";
+import paymentTypeRouter from "./routes/paymentType.routes.js";
 
 app.get("/", (req, res) => {
   res.json("Personal Acount App Node Js");
@@ -29,5 +32,8 @@ app.use("/api/users", userRouter);
 app.use("/api/transection", transactionRouter);
 app.use("/api/bank", bankRouter);
 app.use("/api/cash", cashRouter);
+app.use("/api/category", categoryRouter);
+app.use("/api/transectionType", transectionTypeRouter);
+app.use("/api/paymentType", paymentTypeRouter);
 
 export { app };
