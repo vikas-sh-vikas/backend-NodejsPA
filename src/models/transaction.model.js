@@ -28,7 +28,7 @@ const transactionSchema = new Schema(
     bank: {
       type: Schema.Types.ObjectId,
       ref: Bank,
-      required: true,
+      // required: true,
     },
     date: {
       type: Date,

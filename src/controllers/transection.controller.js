@@ -144,7 +144,6 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     const transaction = await Transaction.create(
       [
         {
-          _id,
           amount,
           category,
           transection_type,
