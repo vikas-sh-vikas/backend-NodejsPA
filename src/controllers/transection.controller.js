@@ -5,21 +5,36 @@ import Cash from "../models/cash.model.js";
 import Bank from "../models/bank.model.js";
 import { ApiError } from "../utils/apiErrors.js";
 import mongoose from "mongoose";
-import ExcelJS from "exceljs";
+// import ExcelJS from "exceljs";
 import TransectionType from "../models/transactionType.model.js";
 import { User_detail } from "../models/userDetail.model.js";
 
 const getTransaction = asyncHandler(async (req, res) => {
-  const transaction = await Transaction.find().populate([
+  const { fromDate, toDate } = req.body;
+
+  // Validate that dates are provided
+  if (!fromDate || !toDate) {
+    return res.status(400).json(new ApiResponse(400, null, "fromDate and toDate are required"));
+  }
+
+  // Find transactions between fromDate and toDate
+  const transaction = await Transaction.find({
+    date: {
+      $gte: new Date(fromDate),
+      $lte: new Date(toDate),
+    },
+  }).populate([
     { path: "bank" },
     { path: "category" },
     { path: "transection_type" },
     { path: "payment_type" },
   ]);
+
   return res
-    .status(201)
-    .json(new ApiResponse(200, transaction, "Transaction list retrive"));
+    .status(200)
+    .json(new ApiResponse(200, transaction, "Transaction list retrieved"));
 });
+
 const getTransactionById = asyncHandler(async (req, res) => {
   const reqBody = await req.body;
   const transaction = await Transaction.findOne({ _id: reqBody._id }).populate([
@@ -353,60 +368,60 @@ const withdrawCash = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Withdraw successfully"));
 });
 
-const exportUser = asyncHandler(async (req, res) => {
-  // 1) Fetch your data
-  const typesList = await TransectionType.find();
+// const exportUser = asyncHandler(async (req, res) => {
+//   // 1) Fetch your data
+//   const typesList = await TransectionType.find();
 
-  // 2) Create workbook & worksheet
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Types");
+//   // 2) Create workbook & worksheet
+//   const workbook = new ExcelJS.Workbook();
+//   const worksheet = workbook.addWorksheet("Types");
 
-  // 3) Define columns (header text + keys + widths)
-  worksheet.columns = [
-    { header: "Name", key: "name", width: 30 },
-    { header: "Description", key: "description", width: 50 },
-  ];
+//   // 3) Define columns (header text + keys + widths)
+//   worksheet.columns = [
+//     { header: "Name", key: "name", width: 30 },
+//     { header: "Description", key: "description", width: 50 },
+//   ];
 
-  // 4) Make header row bold
-  worksheet.getRow(1).font = { bold: true };
+//   // 4) Make header row bold
+//   worksheet.getRow(1).font = { bold: true };
 
-  // 5) Add your data rows
-  typesList.forEach((type) => {
-    worksheet.addRow({
-      name: type.name,
-      description: type.description,
-    });
-  });
+//   // 5) Add your data rows
+//   typesList.forEach((type) => {
+//     worksheet.addRow({
+//       name: type.name,
+//       description: type.description,
+//     });
+//   });
 
-  // 6) Apply thin borders around every cell
-  worksheet.eachRow((row) => {
-    row.eachCell((cell) => {
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
-  });
+//   // 6) Apply thin borders around every cell
+//   worksheet.eachRow((row) => {
+//     row.eachCell((cell) => {
+//       cell.border = {
+//         top: { style: "thin" },
+//         left: { style: "thin" },
+//         bottom: { style: "thin" },
+//         right: { style: "thin" },
+//       };
+//     });
+//   });
 
-  // 7) Send the workbook as an .xlsx download
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
-  res.setHeader("Content-Disposition", 'attachment; filename="Types.xlsx"');
+//   // 7) Send the workbook as an .xlsx download
+//   res.setHeader(
+//     "Content-Type",
+//     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+//   );
+//   res.setHeader("Content-Disposition", 'attachment; filename="Types.xlsx"');
 
-  await workbook.xlsx.write(res);
-  res.end();
-});
+//   await workbook.xlsx.write(res);
+//   res.end();
+// });
 
 export {
   getTransaction,
   getTransactionById,
   getRecentTransaction,
   addEditTransaction,
-  exportUser,
+  // exportUser,
   selfTransfer,
   addEditCash,
   depositCash,

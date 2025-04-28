@@ -11,7 +11,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
 
 //secured routes
-router.route("/getTransaction").get(verifyJWT,getTransaction)
+router.route("/getTransaction").post(verifyJWT,getTransaction)
 router.route("/getTransactionById").post(verifyJWT,getTransactionById)
 router.route("/getRecentTransaction").post(verifyJWT,getRecentTransaction)
 router.route("/addEditTransaction").post(verifyJWT,addEditTransaction)
