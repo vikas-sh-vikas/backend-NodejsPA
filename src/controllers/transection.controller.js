@@ -57,7 +57,12 @@ const getTransactionById = asyncHandler(async (req, res) => {
 const getRecentTransaction = asyncHandler(async (req, res) => {
   const { count } = await req.body;
   const transaction = await Transaction.find()
-    .populate("bank")
+    .populate([
+      { path: "bank" },
+      { path: "category" },
+      { path: "transection_type" },
+      { path: "payment_type" },
+    ])
     .sort({ createdAt: -1 }) // Sort by createdAt in descending order (newest first)
     .limit(count); // Limit to 10 results;
   return res
