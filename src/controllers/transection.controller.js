@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 // import ExcelJS from "exceljs";
 import TransectionType from "../models/transactionType.model.js";
 import { User_detail } from "../models/userDetail.model.js";
+import PaymentType from "../models/paymentType.model.js";
 
 const getTransaction = asyncHandler(async (req, res) => {
   const { fromDate, toDate } = req.body;
@@ -84,70 +85,78 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     description,
   } = reqBody;
 
+  const type = await TransectionType.findOne({_id:transection_type});
+  const payment_method = await PaymentType.findOne({_id:payment_type});
+  const cashAccount = await User_detail.findOne({user_master:req.user._id}).session(session);
   // Update existing transaction
   if (_id) {
     const transaction = await Transaction.findOne({ _id }).session(session);
     const oldAmount = transaction.amount;
-    await Transaction.findOneAndUpdate({ _id }, { ...reqBody }, { session });
-    if (type === "debit") {
-      if (payment_method === "cash") {
-        const cashAccount = await Cash.findOne().session(session);
+    await Transaction.findOneAndUpdate({ _id }, {     amount,
+      category,
+      transection_type,
+      payment_type,
+      bank,
+      date,
+      description }, { session });
+    if (type.name === "Debit") {
+      if (payment_method.name === "Cash") {
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
         }
-        if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
+        if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
           throw new ApiError(400, "Cash account can not be negative");
         }
-        cashAccount.amount =
-          parseFloat(cashAccount.amount) +
+        cashAccount.cash_amount =
+          parseFloat(cashAccount.cash_amount) +
           parseFloat(oldAmount) -
           parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method == "bank") {
+      } else if (payment_method.name == "Bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
-        if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
+        if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
           throw new ApiError(400, "Bank account can not be negative");
         }
 
-        bankAmount.balance =
-          parseFloat(bankAmount.balance) +
+        bankAmount.current_balance =
+          parseFloat(bankAmount.current_balance) +
           parseFloat(oldAmount) -
           parseFloat(amount);
         await bankAmount.save({ session });
       }
-    } else if (type === "credit") {
-      if (payment_method === "cash") {
-        const cashAccount = await Cash.findOne().session(session);
+    } else if (type.name === "Credit") {
+      if (payment_method.name === "Cash") {
+        // const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
         }
-        if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
-          throw new ApiError(400, "Cash account can not be negative");
-        }
+        // if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
+        //   throw new ApiError(400, "Cash account can not be negative");
+        // }
 
-        cashAccount.amount =
-          parseFloat(cashAccount.amount) -
+        cashAccount.cash_amount =
+          parseFloat(cashAccount.cash_amount) -
           parseFloat(oldAmount) +
           parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method == "bank") {
+      } else if (payment_method.name == "Bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
-        if (parseFloat(bankAmount.amount) < parseFloat(amount)) {
+        if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
           throw new ApiError(400, "Bank account can not be negative");
         }
 
-        bankAmount.balance =
-          parseFloat(bankAmount.balance) -
+        bankAmount.current_balance =
+          parseFloat(bankAmount.current_balance) -
           parseFloat(oldAmount) +
           parseFloat(amount);
         await bankAmount.save({ session });
@@ -180,21 +189,21 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       ]
       // { session }
     );
-    if (transection_type === "debit") {
+    if (transection_type.name === "Debit") {
       // Update Cash balance if payment method is "cash"
-      if (payment_type === "cash") {
-        const cashAccount = await Cash.findOne().session(session);
+      if (payment_type.name === "Cash") {
+        const cashAccount = await User_detail.findOne({user_master:req.user._id}).session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
         }
-        if (parseFloat(cashAccount.amount) < parseFloat(amount)) {
+        if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
           throw new ApiError(400, "Cash account can not be negative");
         }
 
         cashAccount.amount =
           parseFloat(cashAccount.amount) - parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_type == "bank") {
+      } else if (payment_type.name == "Bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );
@@ -209,8 +218,8 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           parseFloat(bankAmount.balance) - parseFloat(amount);
         await bankAmount.save({ session });
       }
-    } else if (transection_type === "credit") {
-      if (payment_type === "cash") {
+    } else if (transection_type.name === "Credit") {
+      if (payment_type === "Cash") {
         const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -222,7 +231,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         cashAccount.amount =
           parseFloat(cashAccount.amount) + parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_type == "bank") {
+      } else if (payment_type.name == "Bank") {
         const bankAmount = await Bank.findOne({ _id: bank_id }).session(
           session
         );
@@ -350,6 +359,20 @@ const depositCash = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, null, "Deposit successfully"));
 });
+const deleteTransaction = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  const { _id } = await req.body;
+  await session.withTransaction(async () => {
+    const transaction = await Transaction.findByIdAndDelete({ _id });
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+  });
+  session.endSession();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Delete successfully"));
+});
 const withdrawCash = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { bankId, amount } = await req.body;
@@ -427,6 +450,7 @@ export {
   getRecentTransaction,
   addEditTransaction,
   // exportUser,
+  deleteTransaction,
   selfTransfer,
   addEditCash,
   depositCash,
