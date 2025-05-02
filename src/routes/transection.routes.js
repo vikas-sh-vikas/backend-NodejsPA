@@ -3,6 +3,7 @@ import {getTransaction,getTransactionById, getRecentTransaction,addEditTransacti
     selfTransfer,
     addEditCash,
     depositCash,
+    deleteTransaction,
     withdrawCash} from '../controllers/transection.controller.js';
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -14,6 +15,7 @@ const router = Router()
 router.route("/getTransaction").post(verifyJWT,getTransaction)
 router.route("/getTransactionById").post(verifyJWT,getTransactionById)
 router.route("/getRecentTransaction").post(verifyJWT,getRecentTransaction)
+router.route("/deleteTransaction").post(verifyJWT,deleteTransaction)
 router.route("/addEditTransaction").post(verifyJWT,addEditTransaction)
 router.route("/selfTransfer").post(verifyJWT,selfTransfer)
 router.route("/addEditCash").post(verifyJWT,addEditCash)
