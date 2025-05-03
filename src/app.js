@@ -17,11 +17,10 @@ app.use(express.static("public"));
 app.use(cookieParser());
 //route
 import userRouter from "./routes/user.routes.js";
-import transactionRouter from "./routes/transection.routes.js";
+import transactionRouter from "./routes/transaction.routes.js";
 import bankRouter from "./routes/bank.routes.js";
-import cashRouter from "./routes/cash.routes.js";
 import categoryRouter from "./routes/category.routes.js";
-import transectionTypeRouter from "./routes/transectionType.routes.js";
+import transactionTypeRouter from "./routes/transactionType.routes.js";
 import paymentTypeRouter from "./routes/paymentType.routes.js";
 
 app.get("/", (req, res) => {
@@ -29,11 +28,10 @@ app.get("/", (req, res) => {
 });
 // app.use("/user", userRouter);
 app.use("/api/users", userRouter);
-app.use("/api/transection", transactionRouter);
+app.use("/api/transaction", transactionRouter);
 app.use("/api/bank", bankRouter);
-app.use("/api/cash", cashRouter);
 app.use("/api/category", categoryRouter);
-app.use("/api/transectionType", transectionTypeRouter);
+app.use("/api/transactionType", transactionTypeRouter);
 app.use("/api/paymentType", paymentTypeRouter);
 
 export { app };

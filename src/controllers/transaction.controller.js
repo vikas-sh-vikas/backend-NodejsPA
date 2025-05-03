@@ -1,12 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/apiResponce.js";
 import { Transaction } from "../models/transaction.model.js";
-import Cash from "../models/cash.model.js";
 import Bank from "../models/bank.model.js";
 import { ApiError } from "../utils/apiErrors.js";
 import mongoose from "mongoose";
 // import ExcelJS from "exceljs";
-import TransectionType from "../models/transactionType.model.js";
+import TransactionType from "../models/transactionType.model.js";
 import { User_detail } from "../models/userDetail.model.js";
 import PaymentType from "../models/paymentType.model.js";
 
@@ -15,7 +14,9 @@ const getTransaction = asyncHandler(async (req, res) => {
 
   // Validate that dates are provided
   if (!fromDate || !toDate) {
-    return res.status(400).json(new ApiResponse(400, null, "fromDate and toDate are required"));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "fromDate and toDate are required"));
   }
 
   // Find transactions between fromDate and toDate
@@ -24,13 +25,14 @@ const getTransaction = asyncHandler(async (req, res) => {
       $gte: new Date(fromDate),
       $lte: new Date(toDate),
     },
-  }).populate([
-    { path: "bank" },
-    { path: "category" },
-    { path: "transection_type" },
-    { path: "payment_type" },
-  ]);
-
+  })
+    .populate([
+      { path: "bank" },
+      { path: "category" },
+      { path: "transaction_type" },
+      { path: "payment_type" },
+    ])
+    .sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
   return res
     .status(200)
     .json(new ApiResponse(200, transaction, "Transaction list retrieved"));
@@ -41,7 +43,7 @@ const getTransactionById = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findOne({ _id: reqBody._id }).populate([
     { path: "bank" },
     { path: "category" },
-    { path: "transection_type" },
+    { path: "transaction_type" },
     { path: "payment_type" },
   ]);
   Transaction.findByIdAndDelete({ _id: reqBody._id });
@@ -61,7 +63,7 @@ const getRecentTransaction = asyncHandler(async (req, res) => {
     .populate([
       { path: "bank" },
       { path: "category" },
-      { path: "transection_type" },
+      { path: "transaction_type" },
       { path: "payment_type" },
     ])
     .sort({ createdAt: -1 }) // Sort by createdAt in descending order (newest first)
@@ -78,27 +80,35 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     _id,
     amount,
     category,
-    transection_type,
+    transaction_type,
     payment_type,
     bank,
     date,
     description,
   } = reqBody;
 
-  const type = await TransectionType.findOne({_id:transection_type});
-  const payment_method = await PaymentType.findOne({_id:payment_type});
-  const cashAccount = await User_detail.findOne({user_master:req.user._id}).session(session);
+  const type = await TransactionType.findOne({ _id: transaction_type });
+  const payment_method = await PaymentType.findOne({ _id: payment_type });
+  const cashAccount = await User_detail.findOne({
+    user_master: req.user._id,
+  }).session(session);
   // Update existing transaction
   if (_id) {
     const transaction = await Transaction.findOne({ _id }).session(session);
     const oldAmount = transaction.amount;
-    await Transaction.findOneAndUpdate({ _id }, {     amount,
-      category,
-      transection_type,
-      payment_type,
-      bank,
-      date,
-      description }, { session });
+    await Transaction.findOneAndUpdate(
+      { _id },
+      {
+        amount,
+        category,
+        transaction_type,
+        payment_type,
+        bank,
+        date,
+        description,
+      },
+      { session }
+    );
     if (type.name.trim().toLowerCase() === "debit".toLowerCase()) {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         if (!cashAccount) {
@@ -112,10 +122,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           parseFloat(oldAmount) -
           parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method.name.trim().toLowerCase() === "bank".toLowerCase()) {
-        const bankAmount = await Bank.findOne({ _id: bank_id }).session(
-          session
-        );
+      } else if (
+        payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
+      ) {
+        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
@@ -130,7 +140,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         await bankAmount.save({ session });
       }
     } else if (type.name.trim().toLowerCase() === "credit".toLowerCase()) {
-      if (payment_method.name.trim().toLowerCase() === "Cash".toLowerCase()) {
+      if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -144,10 +154,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           parseFloat(oldAmount) +
           parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method.name.trim() === "bank".toLowerCase()) {
-        const bankAmount = await Bank.findOne({ _id: bank_id }).session(
-          session
-        );
+      } else if (
+        payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
+      ) {
+        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
@@ -180,7 +190,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           _id,
           amount,
           category,
-          transection_type,
+          transaction_type,
           payment_type,
           bank,
           date,
@@ -191,7 +201,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     );
     if (type.name.trim().toLowerCase() === "debit".toLowerCase()) {
       // Update Cash balance if payment method is "cash"
-      if (payment_method.name.trim().toLowerCase() === 'cash'.toLowerCase()) {
+      if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await User_detail.findOne({user_master:req.user._id}).session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -203,10 +213,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         cashAccount.cash_amount =
           parseFloat(cashAccount.cash_amount) - parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method.name.trim().toLowerCase() === 'bank'.toLowerCase()) {
-        const bankAmount = await Bank.findOne({ _id: bank_id }).session(
-          session
-        );
+      } else if (
+        payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
+      ) {
+        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
@@ -218,8 +228,8 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           parseFloat(bankAmount.current_balance) - parseFloat(amount);
         await bankAmount.save({ session });
       }
-    } else if (type.name.trim().toLowerCase() === 'credit'.toLowerCase()) {
-      if (payment_method.name.trim().toLowerCase() === 'cash'.toLowerCase()) {
+    } else if (type.name.trim().toLowerCase() === "credit".toLowerCase()) {
+      if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
           throw new ApiError(400, "Cash account not found");
@@ -231,10 +241,10 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         cashAccount.cash_amount =
           parseFloat(cashAccount.cash_amount) + parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
-      } else if (payment_method.name.trim().toLowerCase() === 'bank'.toLowerCase()) {
-        const bankAmount = await Bank.findOne({ _id: bank_id }).session(
-          session
-        );
+      } else if (
+        payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
+      ) {
+        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
@@ -282,7 +292,14 @@ const selfTransfer = asyncHandler(async (req, res) => {
     }
 
     if (parseFloat(fromBank.current_balance) < transferAmount) {
-      throw new Error("Insufficient balance in the source bank");
+      // throw new Error("Insufficient balance in the source bank");
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "Withdraw failed: insufficient balance", [
+            { field: "amount", message: "Not enough funds" },
+          ])
+        );
     }
 
     fromBank.current_balance =
@@ -302,10 +319,10 @@ const selfTransfer = asyncHandler(async (req, res) => {
 const addEditCash = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
 
-  const { amount } = req.body;
-  const userId = req.user?._id;
+  const { cash } = req.body;
+  const userId = req.user._id;
 
-  if (!userId || amount === undefined) {
+  if (!userId || cash === undefined) {
     return res
       .status(400)
       .json(new ApiResponse(400, null, "Missing user ID or amount"));
@@ -320,7 +337,7 @@ const addEditCash = asyncHandler(async (req, res) => {
       throw new Error("User details not found");
     }
 
-    const newAmount = parseFloat(amount);
+    const newAmount = parseFloat(cash);
 
     if (isNaN(newAmount) || newAmount < 0) {
       throw new Error("Invalid amount value");
@@ -363,6 +380,12 @@ const deleteTransaction = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { _id } = await req.body;
   await session.withTransaction(async () => {
+    const transaction1 = await Transaction.findById({_id})
+    const transactionType = await TransactionType.findById({_id: transaction1.transaction_type})
+    const paymentMethod = await PaymentType.findById({_id: transaction1.payment_type})
+    if(transaction1.type){
+      
+    }
     const transaction = await Transaction.findByIdAndDelete({ _id });
     if (!transaction) {
       throw new Error("Transaction not found");
@@ -395,10 +418,37 @@ const withdrawCash = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, null, "Withdraw successfully"));
 });
+const getCashBankAmount = asyncHandler(async (req, res) => {
+  console.log("Cash", req.user._id);
+  const cash = await User_detail.findOne({ user_master: req.user._id });
+  const banks = await Bank.find();
 
+  const totalBalance = banks.reduce(
+    (total, bank) => total + parseFloat(bank.current_balance || 0),
+    0
+  );
+
+  const cashBankAmount = {
+    cashAmount: parseFloat(cash?.cash_amount || 0),
+    bankAmount: totalBalance,
+  };
+
+  if (!cash) {
+    return res
+      .status(200)
+      .json(
+        new ApiError(400, "User Nnot Found", [
+          { field: "user", message: "User Nnot Found" },
+        ])
+      );
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cashBankAmount, "cash found"));
+});
 // const exportUser = asyncHandler(async (req, res) => {
 //   // 1) Fetch your data
-//   const typesList = await TransectionType.find();
+//   const typesList = await TransactionType.find();
 
 //   // 2) Create workbook & worksheet
 //   const workbook = new ExcelJS.Workbook();
@@ -455,4 +505,5 @@ export {
   addEditCash,
   depositCash,
   withdrawCash,
+  getCashBankAmount,
 };

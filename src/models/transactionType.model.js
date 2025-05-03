@@ -28,8 +28,8 @@ const transactionTypeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-const TransectionType =
+const TransactionType =
   mongoose.models.transaction_types ||
   mongoose.model("transaction_types", transactionTypeSchema);
 
-export default TransectionType;
+export default TransactionType;

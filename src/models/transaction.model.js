@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import Bank from "../models/bank.model.js";
 import Category from "./category,model.js";
-import TransectionType from "./transactionType.model.js";
+import TransactionType from "./transactionType.model.js";
 import PaymentType from "./paymentType.model.js";
 const transactionSchema = new Schema(
   {
@@ -15,9 +15,9 @@ const transactionSchema = new Schema(
       ref: Category,
       required: true,
     },
-    transection_type: {
+    transaction_type: {
       type: Schema.Types.ObjectId,
-      ref: TransectionType,
+      ref: TransactionType,
       required: true,
     },
     payment_type: {

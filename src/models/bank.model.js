@@ -20,7 +20,7 @@ const bankSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    iFsc_code: {
+    ifsc_code: {
       type: String,
     },
     created_on: {

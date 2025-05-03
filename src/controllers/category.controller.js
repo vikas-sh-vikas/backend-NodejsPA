@@ -5,8 +5,7 @@ import { ApiError } from "../utils/apiErrors.js";
 import Category from "../models/category,model.js";
 
 const getCategorys = asyncHandler(async (req, res) => {
-  const bank = await Category.find();
-  // console.log("Customers", player);
+  const bank = await Category.find().sort({ createdAt: -1 });
   return res
     .status(201)
     .json(new ApiResponse(200, bank, "Category list retrive"));
