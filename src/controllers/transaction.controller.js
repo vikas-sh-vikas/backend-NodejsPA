@@ -359,17 +359,20 @@ const depositCash = asyncHandler(async (req, res) => {
   const { bankId, amount } = await req.body;
   await session.withTransaction(async () => {
     const bankDetail = await Bank.findOne({ _id: bankId });
+    const cash = await User_detail.findOne({user_master : req.user._id})
+    cash.cash_amount = parseFloat(cash.cash_amount) - parseFloat(amount)
     if (!bankDetail) {
       throw new Error("Bank details not found");
     }
     const newAmount = parseFloat(amount);
-
+    
     if (isNaN(newAmount) || newAmount < 0) {
       throw new Error("Invalid amount value");
     }
     bankDetail.current_balance =
-      parseInt(bankDetail.current_balance) + newAmount;
+    parseInt(bankDetail.current_balance) + newAmount;
     bankDetail.save({ session });
+    cash.save({session})
   });
   session.endSession();
   return res
@@ -434,6 +437,9 @@ const withdrawCash = asyncHandler(async (req, res) => {
   const { bankId, amount } = await req.body;
   await session.withTransaction(async () => {
     const bankDetail = await Bank.findOne({ _id: bankId });
+    const cash = await User_detail.findOne({user_master : req.user._id})
+    cash.cash_amount = parseFloat(cash.cash_amount) + parseFloat(amount)
+
     if (!bankDetail) {
       throw new Error("Bank details not found");
     }
@@ -445,6 +451,7 @@ const withdrawCash = asyncHandler(async (req, res) => {
     bankDetail.current_balance =
       parseInt(bankDetail.current_balance) - newAmount;
     bankDetail.save({ session });
+    cash.save({session})
   });
   session.endSession();
   return res
