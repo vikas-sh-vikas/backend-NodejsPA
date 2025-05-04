@@ -55,6 +55,10 @@ const transactionSchema = new Schema(
     deleted_on: {
       type: Date,
     },
+        user_master: {
+          type: Schema.Types.ObjectId,
+          required: true,
+        },
   },
   { timestamps: true }
 );

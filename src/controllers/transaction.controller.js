@@ -25,6 +25,7 @@ const getTransaction = asyncHandler(async (req, res) => {
       $gte: new Date(fromDate),
       $lte: new Date(toDate),
     },
+    user_master: req.user._id
   })
     .populate([
       { path: "bank" },
@@ -40,13 +41,13 @@ const getTransaction = asyncHandler(async (req, res) => {
 
 const getTransactionById = asyncHandler(async (req, res) => {
   const reqBody = await req.body;
-  const transaction = await Transaction.findOne({ _id: reqBody._id }).populate([
+  const transaction = await Transaction.findOne({ _id: reqBody._id,user_master: req.user._id }).populate([
     { path: "bank" },
     { path: "category" },
     { path: "transaction_type" },
     { path: "payment_type" },
   ]);
-  Transaction.findByIdAndDelete({ _id: reqBody._id });
+  // Transaction.findByIdAndDelete({ _id: reqBody._id });
   if (!transaction) {
     return NextResponse.json({
       message: "Transaction Not Found",
@@ -59,7 +60,7 @@ const getTransactionById = asyncHandler(async (req, res) => {
 });
 const getRecentTransaction = asyncHandler(async (req, res) => {
   const { count } = await req.body;
-  const transaction = await Transaction.find()
+  const transaction = await Transaction.find({user_master: req.user._id})
     .populate([
       { path: "bank" },
       { path: "category" },
@@ -94,7 +95,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
   }).session(session);
   // Update existing transaction
   if (_id) {
-    const transaction = await Transaction.findOne({ _id }).session(session);
+    const transaction = await Transaction.findOne({ _id,user_master: req.user._id }).session(session);
     const oldAmount = transaction.amount;
     if (type.name.trim().toLowerCase() === "debit".toLowerCase()) {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
@@ -112,7 +113,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       } else if (
         payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
       ) {
-        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
+        const bankAmount = await Bank.findOne({ _id: bank,user_master: req.user._id }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Cash account not found");
         }
@@ -144,7 +145,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       } else if (
         payment_method.name.trim().toLowerCase() === "bank".toLowerCase()
       ) {
-        const bankAmount = await Bank.findOne({ _id: bank }).session(session);
+        const bankAmount = await Bank.findOne({ _id: bank,user_master: req.user._id }).session(session);
         if (!bankAmount) {
           throw new ApiError(400, "Bank account not found");
         }
@@ -160,7 +161,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       }
     }
     await Transaction.findOneAndUpdate(
-      { _id },
+      { _id,user_master: req.user._id },
       {
         amount,
         category,
@@ -254,6 +255,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
           bank,
           date,
           description,
+          user_master: req.user._id
         },
       ],
       { session }
@@ -277,8 +279,8 @@ const selfTransfer = asyncHandler(async (req, res) => {
 
   await session.withTransaction(async () => {
     const [fromBank, toBank] = await Promise.all([
-      Bank.findById(fromBankId).session(session),
-      Bank.findById(toBankId).session(session),
+      Bank.findOne({_id:fromBankId,user_master: req.user._id}).session(session),
+      Bank.findOne({_id:toBankId,user_master: req.user._id}).session(session),
     ]);
 
     if (!fromBank || !toBank) {
@@ -358,7 +360,7 @@ const depositCash = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { bankId, amount } = await req.body;
   await session.withTransaction(async () => {
-    const bankDetail = await Bank.findOne({ _id: bankId });
+    const bankDetail = await Bank.findOne({ _id: bankId,user_master: req.user._id });
     const cash = await User_detail.findOne({user_master : req.user._id})
     cash.cash_amount = parseFloat(cash.cash_amount) - parseFloat(amount)
     if (!bankDetail) {
@@ -383,11 +385,11 @@ const deleteTransaction = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { _id } = await req.body;
   await session.withTransaction(async () => {
-    const transactionDetail = await Transaction.findById({_id})
+    const transactionDetail = await Transaction.findOne({_id,user_master: req.user._id})
     const transactionType = await TransactionType.findById({_id: transactionDetail.transaction_type})
     const paymentMethod = await PaymentType.findById({_id: transactionDetail.payment_type})
     const cash = await User_detail.findOne({user_master: req.user._id})
-    const bank = await Bank.findOne({_id:transactionDetail.bank})
+    const bank = await Bank.findOne({_id:transactionDetail.bank,user_master: req.user._id})
     if(transactionType.name.trim().toLowerCase() == "credit".toLowerCase()){
       if(paymentMethod.name.trim().toLowerCase() == "cash".toLowerCase()){
         if(!cash){
@@ -436,7 +438,7 @@ const withdrawCash = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { bankId, amount } = await req.body;
   await session.withTransaction(async () => {
-    const bankDetail = await Bank.findOne({ _id: bankId });
+    const bankDetail = await Bank.findOne({ _id: bankId,user_master: req.user._id });
     const cash = await User_detail.findOne({user_master : req.user._id})
     cash.cash_amount = parseFloat(cash.cash_amount) + parseFloat(amount)
 
@@ -461,7 +463,7 @@ const withdrawCash = asyncHandler(async (req, res) => {
 const getCashBankAmount = asyncHandler(async (req, res) => {
   console.log("Cash", req.user._id);
   const cash = await User_detail.findOne({ user_master: req.user._id });
-  const banks = await Bank.find();
+  const banks = await Bank.find({user_master: req.user._id});
 
   const totalBalance = banks.reduce(
     (total, bank) => total + parseFloat(bank.current_balance || 0),

@@ -5,12 +5,14 @@ import { ApiError } from "../utils/apiErrors.js";
 import Bank from "../models/bank.model.js";
 
 const getBanks = asyncHandler(async (req, res) => {
-  const bank = await Bank.find().sort({ createdAt: -1 });
+  const bank = await Bank.find({ user_master: req.user._id }).sort({ createdAt: -1 });
+
+  // const bank = await Bank.find().sort({ createdAt: -1 });
   return res.status(201).json(new ApiResponse(200, bank, "Bank list retrive"));
 });
 const getBankById = asyncHandler(async (req, res) => {
   const reqBody = await req.body;
-  const bank = await Bank.findOne({ _id: reqBody._id });
+  const bank = await Bank.findOne({ _id: reqBody._id,user_master: req.user._id });
 
   if (!bank) {
     return new ApiError(400, "Bank Not Found");
@@ -31,7 +33,7 @@ const addEditBanks = asyncHandler(async (req, res) => {
   //add customer
   if (_id) {
     // Find the existing bank entry
-    const existingBank = await Bank.findById(_id);
+    const existingBank = await Bank.findOne({ _id, user_master: req.user._id });
     if (!existingBank) {
       return ApiError(400, "Bank not found");
     } else {
@@ -63,3 +65,4 @@ const addEditBanks = asyncHandler(async (req, res) => {
   }
 });
 export { getBanks, getBankById, addEditBanks };
+  
