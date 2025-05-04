@@ -64,5 +64,24 @@ const addEditBanks = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(200, "", "Bank Saved"));
   }
 });
-export { getBanks, getBankById, addEditBanks };
+const deleteBank = asyncHandler(async (req, res) => {
+  const reqBody = await req.body;
+  const {
+    _id,
+  } = reqBody;
+  //add customer
+
+    const bank = await Bank.findOne({_id,user_master:req.user._id});
+    if(!bank){
+      return ApiError(400, "Bank not found");
+    }
+    const transactionExists = await Transaction.exists({ bank: bank._id });
+    if(transactionExists){
+
+    }
+
+    return res.status(201).json(new ApiResponse(200, "", "Bank Saved"));
+  
+});
+export { getBanks, getBankById, addEditBanks,deleteBank };
   

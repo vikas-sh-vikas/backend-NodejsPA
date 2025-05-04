@@ -38,11 +38,20 @@ const registerUser = asyncHandler(async (req, res) => {
   if (existedUser) {
     res.status(400).json(new ApiError(400, "Username or Email already exists"));
   }
+
+  const profilePic = req.files?.profilepic?.[0];
+
+if (!profilePic) {
+  return res.status(400).json({ error: "No profile picture uploaded" });
+}
+
+const result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
   // const profilePic = await req.files?.profilepic[0]?.path;
   // const profile = await uploadOnCloudinary(profilePic);
+
   const user = await User.create({
     user_name,
-    // profilepic: profile?.url || "",
+    profile_picture: result?.secure_url  || "",
     email,
     full_name,
     password,
