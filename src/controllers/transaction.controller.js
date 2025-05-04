@@ -461,7 +461,6 @@ const withdrawCash = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Withdraw successfully"));
 });
 const getCashBankAmount = asyncHandler(async (req, res) => {
-  console.log("Cash", req.user._id);
   const cash = await User_detail.findOne({ user_master: req.user._id });
   const banks = await Bank.find({user_master: req.user._id});
 

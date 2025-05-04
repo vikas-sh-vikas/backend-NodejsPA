@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiErrors.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/apiResponce.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 import { User_detail } from "../models/userDetail.model.js";
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -19,64 +20,66 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  const {
-    user_name,
-    email,
-    full_name,
-    profile_picture,
-    password,
-    cash_amount,
-  } = req.body;
-  if (
-    [user_name, email, full_name, password].some((item) => item?.trim() === "")
-  ) {
-    throw new ApiError(400, "All Fields Required");
-  }
-  const existedUser = await User.findOne({
-    $or: [{ user_name }, { email }],
-  });
-  if (existedUser) {
-    res.status(400).json(new ApiError(400, "Username or Email already exists"));
-  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  const profilePic = req.files?.profilepic?.[0];
+  try {
+    const {
+      user_name,
+      email,
+      full_name,
+      password,
+      mobileNo
+    } = req.body;
 
-if (!profilePic) {
-  return res.status(400).json({ error: "No profile picture uploaded" });
-}
-
-const result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
-  // const profilePic = await req.files?.profilepic[0]?.path;
-  // const profile = await uploadOnCloudinary(profilePic);
-
-  const user = await User.create({
-    user_name,
-    profile_picture: result?.secure_url  || "",
-    email,
-    full_name,
-    password,
-  });
-  const createdUser = await User.findById(user._id).select("-password");
-
-  if (!createdUser) {
-    throw new ApiError(500, "something went wrong while saving");
-  } else {
-    const userDetail = await User_detail.create({
-      cash_amount,
-      // profilepic: profile?.url || "",
-      user_master: createdUser._id,
-    });
-    const createdUserDetail = await User_detail.findById(userDetail._id).select(
-      "-password"
-    );
-    console.log("Details", createdUserDetail);
-    if (!createdUserDetail) {
-      throw new ApiError(500, "something went wrong while saving");
+    if ([user_name, email, full_name, password,mobileNo].some((item) => item?.trim() === "")) {
+      throw new ApiError(400, "All Fields Required");
     }
+
+    const existedUser = await User.findOne({
+      $or: [{ user_name }, { email }],
+    }).session(session);
+
+    if (existedUser) {
+      await session.abortTransaction();
+      return res.status(400).json(new ApiError(400, "Username or Email already exists"));
+    }
+
+    const profilePic = req.files?.profilepic?.[0];
+    if (!profilePic) {
+      await session.abortTransaction();
+      return res.status(400).json({ error: "No profile picture uploaded" });
+    }
+
+    const result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
+
+    const user = await User.create([{
+      user_name,
+      profile_picture: result?.secure_url || "",
+      email,
+      full_name,
+      password,
+      mobileNo
+    }], { session });
+
+    const userDetail = await User_detail.create([{
+      user_master: user[0]._id,
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const createdUser = await User.findById(user[0]._id).select("-password");
+
+    return res
+      .status(201)
+      .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new ApiError(500, error.message || "Registration failed with transaction.");
   }
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {

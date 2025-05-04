@@ -6,7 +6,6 @@ import PaymentType from "../models/paymentType.model.js";
 
 const getPaymentTypes = asyncHandler(async (req, res) => {
   const transactionType = await PaymentType.find().sort({ createdAt: -1 });
-  // console.log("Customers", player);
   return res
     .status(201)
     .json(new ApiResponse(200, transactionType, "PaymentType list retrive"));

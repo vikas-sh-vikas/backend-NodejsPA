@@ -4,7 +4,7 @@ const user_detail = new Schema(
   {
     cash_amount: {
       type: String,
-      required: true,
+      // required: true,
     },
     bank_amount: {
       type: String,

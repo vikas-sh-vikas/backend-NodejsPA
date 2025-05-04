@@ -6,7 +6,6 @@ import TransactionType from "../models/transactionType.model.js";
 
 const getTransactionTypes = asyncHandler(async (req, res) => {
   const transactionType = await TransactionType.find().sort({ createdAt: -1 });
-  // console.log("Customers", player);
   return res
     .status(201)
     .json(
