@@ -495,7 +495,7 @@ const exportUser = asyncHandler(async (req, res) => {
     { path: "transaction_type" },
     { path: "payment_type" },]);
     
-    console.log("object",typesList)
+    // console.log("object",typesList)
   // 2) Create workbook & worksheet
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Types");
