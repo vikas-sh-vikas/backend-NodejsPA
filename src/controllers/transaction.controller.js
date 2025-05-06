@@ -4,7 +4,7 @@ import { Transaction } from "../models/transaction.model.js";
 import Bank from "../models/bank.model.js";
 import { ApiError } from "../utils/apiErrors.js";
 import mongoose from "mongoose";
-// import ExcelJS from "exceljs";
+import ExcelJS from "exceljs";
 import TransactionType from "../models/transactionType.model.js";
 import { User_detail } from "../models/userDetail.model.js";
 import PaymentType from "../models/paymentType.model.js";
@@ -487,60 +487,75 @@ const getCashBankAmount = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, cashBankAmount, "cash found"));
 });
-// const exportUser = asyncHandler(async (req, res) => {
-//   // 1) Fetch your data
-//   const typesList = await TransactionType.find();
+const exportUser = asyncHandler(async (req, res) => {
+  // 1) Fetch your data
+  const typesList = await Transaction.find().populate([
+    { path: "bank" },
+    { path: "category" },
+    { path: "transaction_type" },
+    { path: "payment_type" },]);
+    
+    // console.log("object",typesList)
+  // 2) Create workbook & worksheet
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Types");
 
-//   // 2) Create workbook & worksheet
-//   const workbook = new ExcelJS.Workbook();
-//   const worksheet = workbook.addWorksheet("Types");
+  // 3) Define columns (header text + keys + widths)
+  worksheet.columns = [
+    { header: "Date", key: "date", width: 30 },
+    { header: "Transaction Type", key: "transactionType", width: 30 },
+    { header: "Category", key: "category", width: 30 },
+    { header: "Payment Type", key: "paymentType", width: 30 },
+    { header: "Bank", key: "bank", width: 30 },
+    { header: "Amount", key: "amount", width: 30 },
+    { header: "Description", key: "description", width: 50 },
+  ];
 
-//   // 3) Define columns (header text + keys + widths)
-//   worksheet.columns = [
-//     { header: "Name", key: "name", width: 30 },
-//     { header: "Description", key: "description", width: 50 },
-//   ];
+  // 4) Make header row bold
+  worksheet.getRow(1).font = { bold: true };
 
-//   // 4) Make header row bold
-//   worksheet.getRow(1).font = { bold: true };
+  // 5) Add your data rows
+  typesList.forEach((type) => {
+    worksheet.addRow({
+      date: type.date,
+      transactionType: type.transaction_type.name,
+      category: type.category.name,
+      paymentType: type.payment_type.name,
+      bank: type.bank ? type.bank.name : "",
+      amount: type.amount,
+      description: type.description,
+    });
+  });
 
-//   // 5) Add your data rows
-//   typesList.forEach((type) => {
-//     worksheet.addRow({
-//       name: type.name,
-//       description: type.description,
-//     });
-//   });
+  // 6) Apply thin borders around every cell
+  worksheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+  });
 
-//   // 6) Apply thin borders around every cell
-//   worksheet.eachRow((row) => {
-//     row.eachCell((cell) => {
-//       cell.border = {
-//         top: { style: "thin" },
-//         left: { style: "thin" },
-//         bottom: { style: "thin" },
-//         right: { style: "thin" },
-//       };
-//     });
-//   });
+  // 7) Send the workbook as an .xlsx download
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader("Content-Disposition", 'attachment; filename="Types.xlsx"');
 
-//   // 7) Send the workbook as an .xlsx download
-//   res.setHeader(
-//     "Content-Type",
-//     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-//   );
-//   res.setHeader("Content-Disposition", 'attachment; filename="Types.xlsx"');
-
-//   await workbook.xlsx.write(res);
-//   res.end();
-// });
+  await workbook.xlsx.write(res);
+  res.end();
+});
 
 export {
   getTransaction,
   getTransactionById,
   getRecentTransaction,
   addEditTransaction,
-  // exportUser,
+  exportUser,
   deleteTransaction,
   selfTransfer,
   addEditCash,
