@@ -12,10 +12,14 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken };
   } catch (error) {
-    throw new ApiError(
-      500,
-      "Something went wrong while generating referesh and access token"
-    );
+   return res
+        .status(200)
+        .json(
+          new ApiError(500, "RefreshToken Fail", [
+            { field: "amount", message: "Something went wrong while generating referesh and access token" },
+          ])
+        );
+    
   }
 };
 
@@ -33,7 +37,13 @@ const registerUser = asyncHandler(async (req, res) => {
     } = req.body;
 
     if ([user_name, email, full_name, password,mobileNo].some((item) => item?.trim() === "")) {
-      throw new ApiError(400, "All Fields Required");
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "Register Fail", [
+            { field: "amount", message: "All Fields Required" },
+          ])
+        );
     }
 
     const existedUser = await User.findOne({
@@ -42,13 +52,25 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (existedUser) {
       await session.abortTransaction();
-      return res.status(400).json(new ApiError(400, "Username or Email already exists"));
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "Register Fail", [
+            { field: "amount", message: "Username or Email already exists" },
+          ])
+        );
     }
 
     const profilePic = req.files?.profilepic?.[0];
     if (!profilePic) {
       await session.abortTransaction();
-      return res.status(400).json({ error: "No profile picture uploaded" });
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "Register Fail", [
+          { field: "amount", message: "No profile picture uploaded" },
+        ])
+      );
     }
 
     const result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
@@ -78,7 +100,13 @@ const registerUser = asyncHandler(async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    throw new ApiError(500, error.message || "Registration failed with transaction.");
+    return res
+      .status(200)
+      .json(
+        new ApiError(400, "Register Fail", [
+          { field: "amount", message: error.message || "Registration failed with transaction." },
+        ])
+      );
   }
 });
 
@@ -86,7 +114,13 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, user_name, password } = req.body;
 
   if (!user_name && !email) {
-    throw new ApiError(400, "username or email is required");
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "Login Fail", [
+        { field: "amount", message: "username or email is required" },
+      ])
+    );
   }
 
   const user = await User.findOne({
@@ -94,13 +128,25 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "User does not exist");
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "Login Fail", [
+        { field: "amount", message: "User does not exist" },
+      ])
+    );
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid user credentials");
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "Login Fail", [
+        { field: "amount", message: "Invalid user credentials" },
+      ])
+    );
   }
 
   const { accessToken } = await generateAccessAndRefereshTokens(user._id);
