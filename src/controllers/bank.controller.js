@@ -6,7 +6,15 @@ import Bank from "../models/bank.model.js";
 
 const getBanks = asyncHandler(async (req, res) => {
   const bank = await Bank.find({ user_master: req.user._id }).sort({ createdAt: -1 });
-
+  if(!bank) {
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "getBanks fail", [
+              { message: "Bank not found" },
+            ])
+          );
+  }
   // const bank = await Bank.find().sort({ createdAt: -1 });
   return res.status(201).json(new ApiResponse(200, bank, "Bank list retrive"));
 });
@@ -15,7 +23,13 @@ const getBankById = asyncHandler(async (req, res) => {
   const bank = await Bank.findOne({ _id: reqBody._id,user_master: req.user._id });
 
   if (!bank) {
-    return new ApiError(400, "Bank Not Found");
+    return res
+          .status(200)
+          .json(
+            new ApiError(400, "getBanks fail", [
+              { message: "Bank not found" },
+            ])
+          );
   }
   return res.status(201).json(new ApiResponse(200, bank, "Bank Found"));
 });
@@ -35,7 +49,13 @@ const addEditBanks = asyncHandler(async (req, res) => {
     // Find the existing bank entry
     const existingBank = await Bank.findOne({ _id, user_master: req.user._id });
     if (!existingBank) {
-      return ApiError(400, "Bank not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "adddEdditBank fail", [
+          { message: "Bank not found" },
+        ])
+      );
     } else {
       await Bank.findByIdAndUpdate(
         _id,
@@ -73,7 +93,13 @@ const deleteBank = asyncHandler(async (req, res) => {
 
     const bank = await Bank.findOne({_id,user_master:req.user._id});
     if(!bank){
-      return ApiError(400, "Bank not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "deleteBank fail", [
+          { message: "Bank not found" },
+        ])
+      );
     }
     const transactionExists = await Transaction.exists({ bank: bank._id });
     if(transactionExists){

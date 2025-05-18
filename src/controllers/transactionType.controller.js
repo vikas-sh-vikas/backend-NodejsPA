@@ -6,6 +6,15 @@ import TransactionType from "../models/transactionType.model.js";
 
 const getTransactionTypes = asyncHandler(async (req, res) => {
   const transactionType = await TransactionType.find().sort({ createdAt: -1 });
+  if(!transactionType) {
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "getTransactionTypes Fail", [
+        {  message: "Transaction type not found" },
+      ])
+    );
+  }
   return res
     .status(201)
     .json(
@@ -17,7 +26,13 @@ const getTransactionTypeById = asyncHandler(async (req, res) => {
   const bank = await TransactionType.findOne({ _id: reqBody._id });
 
   if (!bank) {
-    return new ApiError(400, "TransactionType Not Found");
+    return res
+        .status(200)
+        .json(
+          new ApiError(400, "getTransactionTypeById Fail", [
+            {  message: "TransactionType Not Found" },
+          ])
+        );
   }
   return res
     .status(201)
@@ -31,7 +46,13 @@ const addEditTransactionType = asyncHandler(async (req, res) => {
     // Find the existing bank entry
     const existingTransactionType = await TransactionType.findById(_id);
     if (!existingTransactionType) {
-      return ApiError(400, "TransactionType not found");
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "addEditTransactionType Fail", [
+            {  message: "TransactionType not found" },
+          ])
+        );
     }
 
     await TransactionType.findByIdAndUpdate(_id, {

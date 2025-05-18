@@ -16,10 +16,9 @@ const generateAccessAndRefereshTokens = async (userId) => {
         .status(200)
         .json(
           new ApiError(500, "RefreshToken Fail", [
-            { field: "amount", message: "Something went wrong while generating referesh and access token" },
+            {  message: "Something went wrong while generating referesh and access token" },
           ])
         );
-    
   }
 };
 
@@ -41,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
         .status(200)
         .json(
           new ApiError(400, "Register Fail", [
-            { field: "amount", message: "All Fields Required" },
+            { message: "All Fields Required" },
           ])
         );
     }
@@ -56,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
         .status(200)
         .json(
           new ApiError(400, "Register Fail", [
-            { field: "amount", message: "Username or Email already exists" },
+            { message: "Username or Email already exists" },
           ])
         );
     }
@@ -68,7 +67,7 @@ const registerUser = asyncHandler(async (req, res) => {
       .status(200)
       .json(
         new ApiError(400, "Register Fail", [
-          { field: "amount", message: "No profile picture uploaded" },
+          { message: "No profile picture uploaded" },
         ])
       );
     }
@@ -104,7 +103,7 @@ const registerUser = asyncHandler(async (req, res) => {
       .status(200)
       .json(
         new ApiError(400, "Register Fail", [
-          { field: "amount", message: error.message || "Registration failed with transaction." },
+          { message: error.message || "Registration failed with transaction." },
         ])
       );
   }
@@ -118,7 +117,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiError(400, "Login Fail", [
-        { field: "amount", message: "username or email is required" },
+        { message: "username or email is required" },
       ])
     );
   }
@@ -128,13 +127,11 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    return res
-    .status(200)
-    .json(
-      new ApiError(400, "Login Fail", [
-        { field: "amount", message: "User does not exist" },
-      ])
-    );
+    return res.status(200).json(
+      new ApiError(400, "Login Fail",[
+        {  message: "User not found" },
+      ] )
+    ) 
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -144,7 +141,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiError(400, "Login Fail", [
-        { field: "amount", message: "Invalid user credentials" },
+        {  message: "Invalid user credentials" },
       ])
     );
   }

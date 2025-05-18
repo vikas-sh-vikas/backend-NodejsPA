@@ -5,19 +5,35 @@ import { ApiError } from "../utils/apiErrors.js";
 import PaymentType from "../models/paymentType.model.js";
 
 const getPaymentTypes = asyncHandler(async (req, res) => {
-  const transactionType = await PaymentType.find().sort({ createdAt: -1 });
+  const paymentType = await PaymentType.find().sort({ createdAt: -1 });
+  if(!paymentType) {
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "getPaymentTypes fail", [
+        { message: "Payment type not found" },
+      ])
+    );
+
+  }
   return res
     .status(201)
-    .json(new ApiResponse(200, transactionType, "PaymentType list retrive"));
+    .json(new ApiResponse(200, paymentType, "PaymentType list retrive"));
 });
 const getPaymentTypeById = asyncHandler(async (req, res) => {
   const reqBody = await req.body;
-  const bank = await PaymentType.findOne({ _id: reqBody._id });
+  const paymentType = await PaymentType.findOne({ _id: reqBody._id });
 
-  if (!bank) {
-    return new ApiError(400, "PaymentType Not Found");
+  if (!paymentType) {
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "getPaymentTypes fail", [
+        { message: "Payment type not found" },
+      ])
+    );
   }
-  return res.status(201).json(new ApiResponse(200, bank, "PaymentType Found"));
+  return res.status(201).json(new ApiResponse(200, paymentType, "PaymentType Found"));
 });
 const addEditPaymentType = asyncHandler(async (req, res) => {
   const reqBody = await req.body;
@@ -27,7 +43,13 @@ const addEditPaymentType = asyncHandler(async (req, res) => {
     // Find the existing bank entry
     const existingPaymentType = await PaymentType.findById(_id);
     if (!existingPaymentType) {
-      return ApiError(400, "PaymentType not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "addEditPaymentType fail", [
+          { message: "PaymentType not found" },
+        ])
+      );
     }
 
     await PaymentType.findByIdAndUpdate(_id, {

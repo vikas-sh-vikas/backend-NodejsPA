@@ -15,8 +15,12 @@ const getTransaction = asyncHandler(async (req, res) => {
   // Validate that dates are provided
   if (!fromDate || !toDate) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "fromDate and toDate are required"));
+    .status(200)
+    .json(
+      new ApiError(400, "getTransaction Fail", [
+        {  message: "fromDate and toDate are required" },
+      ])
+    );
   }
 
   // Find transactions between fromDate and toDate
@@ -34,6 +38,15 @@ const getTransaction = asyncHandler(async (req, res) => {
       { path: "payment_type" },
     ])
     .sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
+    if(!transaction){
+      return res
+    .status(200)
+    .json(
+      new ApiError(400, "getTransaction Fail", [
+        {  message: "Transaction List not found" },
+      ])
+    );
+    }
   return res
     .status(200)
     .json(new ApiResponse(200, transaction, "Transaction list retrieved"));
@@ -49,10 +62,13 @@ const getTransactionById = asyncHandler(async (req, res) => {
   ]);
   // Transaction.findByIdAndDelete({ _id: reqBody._id });
   if (!transaction) {
-    return NextResponse.json({
-      message: "Transaction Not Found",
-      data: transaction,
-    });
+    return res
+    .status(200)
+    .json(
+      new ApiError(400, "getTransactionById Fail", [
+        {  message: "Transaction Not Found" },
+      ])
+    );
   }
   return res
     .status(201)
@@ -69,6 +85,15 @@ const getRecentTransaction = asyncHandler(async (req, res) => {
     ])
     .sort({ createdAt: -1 }) // Sort by createdAt in descending order (newest first)
     .limit(count); // Limit to 10 results;
+    if(!transaction){
+      return res
+    .status(200)
+    .json(
+      new ApiError(400, "getRecentTransaction Fail", [
+        {  message: "Transaction Not Found" },
+      ])
+    );
+    }
   return res
     .status(201)
     .json(new ApiResponse(200, transaction, "Transaction Found"));
@@ -100,10 +125,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
     if (type.name.trim().toLowerCase() === "debit".toLowerCase()) {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         if (!cashAccount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
-          throw new ApiError(400, "Cash account can not be negative");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account can not be negative" },
+            ]));
         }
         cashAccount.cash_amount =
           parseFloat(cashAccount.cash_amount) +
@@ -115,10 +150,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       ) {
         const bankAmount = await Bank.findOne({ _id: bank,user_master: req.user._id }).session(session);
         if (!bankAmount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
-          throw new ApiError(400, "Bank account can not be negative");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Bank account can not be negative" },
+            ]));
         }
 
         bankAmount.current_balance =
@@ -131,7 +176,12 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         // if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
         //   throw new ApiError(400, "Cash account can not be negative");
@@ -147,7 +197,12 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       ) {
         const bankAmount = await Bank.findOne({ _id: bank,user_master: req.user._id }).session(session);
         if (!bankAmount) {
-          throw new ApiError(400, "Bank account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Bank account not found" },
+            ]));
         }
           // if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
           //   throw new ApiError(400, "Bank account can not be negative");
@@ -191,10 +246,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await User_detail.findOne({user_master:req.user._id}).session(session);
         if (!cashAccount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
-          throw new ApiError(400, "Cash account can not be negative");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account can not be negative" },
+            ]));
         }
 
         cashAccount.cash_amount =
@@ -205,10 +270,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       ) {
         const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
-          throw new ApiError(400, "Bank account can not be negative");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Bank account can not be negative" },
+            ]));
         }
 
         bankAmount.current_balance =
@@ -219,10 +294,20 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       if (payment_method.name.trim().toLowerCase() === "cash".toLowerCase()) {
         //const cashAccount = await Cash.findOne().session(session);
         if (!cashAccount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
-          throw new ApiError(400, "Cash account can not be negative");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account can not be negative" },
+            ]));
         }
 
         cashAccount.cash_amount =
@@ -233,7 +318,12 @@ const addEditTransaction = asyncHandler(async (req, res) => {
       ) {
         const bankAmount = await Bank.findOne({ _id: bank }).session(session);
         if (!bankAmount) {
-          throw new ApiError(400, "Cash account not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "addEditTransaction Fail", [
+              {  message: "Cash account not found" },
+            ]));
         }
         // if (parseFloat(bankAmount.current_balance) < parseFloat(amount)) {
         //   throw new ApiError(400, "Bank account can not be negative");
@@ -272,9 +362,13 @@ const selfTransfer = asyncHandler(async (req, res) => {
   const { fromBankId, toBankId, amount } = req.body;
 
   if (!fromBankId || !toBankId || !amount) {
+
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Missing required fields"));
+    .status(200)
+    .json(
+      new ApiError(400, "selfTransfer Fail", [
+        {  message: "Missing required fields" },
+      ]));
   }
 
   await session.withTransaction(async () => {
@@ -284,13 +378,23 @@ const selfTransfer = asyncHandler(async (req, res) => {
     ]);
 
     if (!fromBank || !toBank) {
-      throw new Error("Invalid bank account(s)");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "selfTransfer Fail", [
+          {  message: "Invalid bank account" },
+        ]));
     }
 
     const transferAmount = parseFloat(amount);
 
     if (isNaN(transferAmount) || transferAmount <= 0) {
-      throw new Error("Invalid transfer amount");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "selfTransfer Fail", [
+          {  message: "Invalid transfer amount" },
+        ]));
     }
 
     if (parseFloat(fromBank.current_balance) < transferAmount) {
@@ -299,7 +403,7 @@ const selfTransfer = asyncHandler(async (req, res) => {
         .status(200)
         .json(
           new ApiError(400, "Withdraw failed: insufficient balance", [
-            { field: "amount", message: "Not enough funds" },
+            { message: "Not enough funds" },
           ])
         );
     }
@@ -326,8 +430,11 @@ const addEditCash = asyncHandler(async (req, res) => {
 
   if (!userId || cash === undefined) {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Missing user ID or amount"));
+    .status(200)
+    .json(
+      new ApiError(400, "addEditCash Fail", [
+        {  message: "Missing user ID or amount" },
+      ]));
   }
 
   await session.withTransaction(async () => {
@@ -336,13 +443,23 @@ const addEditCash = asyncHandler(async (req, res) => {
     }).session(session);
 
     if (!userDetail) {
-      throw new Error("User details not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "addEditCash Fail", [
+          {  message: "User details not found" },
+        ]));
     }
 
     const newAmount = parseFloat(cash);
 
     if (isNaN(newAmount) || newAmount < 0) {
-      throw new Error("Invalid amount value");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "addEditCash Fail", [
+          {  message: "Invalid amount value" },
+        ]));
     }
 
     userDetail.cash_amount = newAmount;
@@ -364,12 +481,22 @@ const depositCash = asyncHandler(async (req, res) => {
     const cash = await User_detail.findOne({user_master : req.user._id})
     cash.cash_amount = parseFloat(cash.cash_amount) - parseFloat(amount)
     if (!bankDetail) {
-      throw new Error("Bank details not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "depositCash Fail", [
+          {  message: "Bank details not found" },
+        ]));
     }
     const newAmount = parseFloat(amount);
     
     if (isNaN(newAmount) || newAmount < 0) {
-      throw new Error("Invalid amount value");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "depositCash Fail", [
+          {  message: "Invalid amount value" },
+        ]));
     }
     bankDetail.current_balance =
     parseInt(bankDetail.current_balance) + newAmount;
@@ -393,14 +520,24 @@ const deleteTransaction = asyncHandler(async (req, res) => {
     if(transactionType.name.trim().toLowerCase() == "credit".toLowerCase()){
       if(paymentMethod.name.trim().toLowerCase() == "cash".toLowerCase()){
         if(!cash){
-          throw new Error("cash not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "deleteTransaction Fail", [
+              {  message: "cash not found" },
+            ]));
         }
         cash.cash_amount = parseFloat(cash.cash_amount) -  parseFloat(transactionDetail.amount) 
         cash.save({ session });
       }
       else if(paymentMethod.name.trim().toLowerCase() == "bank".toLowerCase()){
         if(!bank){
-          throw new Error("bank not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "deleteTransaction Fail", [
+              {  message: "bank not found" },
+            ]));
         }
         bank.current_balance = parseFloat(bank.current_balance) - parseFloat(transactionDetail.amount)
         bank.save({ session });
@@ -410,7 +547,12 @@ const deleteTransaction = asyncHandler(async (req, res) => {
     else if(transactionType.name.trim().toLowerCase() == "debit".toLowerCase()){
       if(paymentMethod.name.trim().toLowerCase() == "cash".toLowerCase()){
         if(!cash){
-          throw new Error("cash not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "deleteTransaction Fail", [
+              {  message: "cash not found" },
+            ]));
         }
         cash.cash_amount = parseFloat(cash.cash_amount) +  parseFloat(transactionDetail.amount) 
         cash.save({ session });
@@ -418,7 +560,12 @@ const deleteTransaction = asyncHandler(async (req, res) => {
       }
       else if(paymentMethod.name.trim().toLowerCase() == "bank".toLowerCase()){
         if(!bank){
-          throw new Error("bank not found");
+          return res
+          .status(200)
+          .json(
+            new ApiError(400, "deleteTransaction Fail", [
+              {  message: "bank not found" },
+            ]));
         }
         bank.current_balance = parseFloat(bank.current_balance) + parseFloat(transactionDetail.amount)
         bank.save({ session });
@@ -426,7 +573,12 @@ const deleteTransaction = asyncHandler(async (req, res) => {
     }
     const transaction = await Transaction.findByIdAndDelete({ _id });
     if (!transaction) {
-      throw new Error("Transaction not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "deleteTransaction Fail", [
+          {  message: "Transaction not found" },
+        ]));
     }
   });
   session.endSession();
@@ -443,12 +595,22 @@ const withdrawCash = asyncHandler(async (req, res) => {
     cash.cash_amount = parseFloat(cash.cash_amount) + parseFloat(amount)
 
     if (!bankDetail) {
-      throw new Error("Bank details not found");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "withdrawCash Fail", [
+          {  message: "Bank details not found" },
+        ]));
     }
     const newAmount = parseFloat(amount);
 
     if (isNaN(newAmount) || newAmount < 0) {
-      throw new Error("Invalid amount value");
+      return res
+      .status(200)
+      .json(
+        new ApiError(400, "withdrawCash Fail", [
+          {  message: "Invalid amount value" },
+        ]));
     }
     bankDetail.current_balance =
       parseInt(bankDetail.current_balance) - newAmount;
@@ -478,8 +640,8 @@ const getCashBankAmount = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .json(
-        new ApiError(400, "User Nnot Found", [
-          { field: "user", message: "User Nnot Found" },
+        new ApiError(400, "getCashBankAmount fail", [
+          { message: "User Not Found" },
         ])
       );
   }
