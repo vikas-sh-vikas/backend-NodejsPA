@@ -61,18 +61,20 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const profilePic = req.files?.profilepic?.[0];
-    if (!profilePic) {
-      await session.abortTransaction();
-      return res
-      .status(200)
-      .json(
-        new ApiError(400, "Register Fail", [
-          { message: "No profile picture uploaded" },
-        ])
-      );
+    // if (!profilePic) {
+    //   await session.abortTransaction();
+    //   return res
+    //   .status(200)
+    //   .json(
+    //     new ApiError(400, "Register Fail", [
+    //       { message: "No profile picture uploaded" },
+    //     ])
+    //   );
+    // }
+    const result = null;
+    if(profilePic){
+      result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
     }
-
-    const result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
 
     const user = await User.create([{
       user_name,
