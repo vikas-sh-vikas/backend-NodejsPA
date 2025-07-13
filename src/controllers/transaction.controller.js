@@ -642,17 +642,14 @@ const withdrawCash = asyncHandler(async (req, res) => {
 const getCashBankAmount = asyncHandler(async (req, res) => {
   const cash = await User_detail.findOne({ user_master: req.user._id });
   const banks = await Bank.find({user_master: req.user._id});
-
   const totalBalance = banks.reduce(
     (total, bank) => total + parseFloat(bank.current_balance || 0),
     0
   );
-
   const cashBankAmount = {
     cashAmount: parseFloat(cash?.cash_amount || 0),
     bankAmount: totalBalance,
   };
-
   if (!cash) {
     return res
       .status(200)
@@ -668,13 +665,24 @@ const getCashBankAmount = asyncHandler(async (req, res) => {
 });
 const exportUser = asyncHandler(async (req, res) => {
   // 1) Fetch your data
-  const typesList = await Transaction.find().populate([
-    { path: "bank" },
-    { path: "category" },
-    { path: "transaction_type" },
-    { path: "payment_type" },]);
+  const {fromDate,toDate} = await req.body;
+  const typesList = await Transaction.find({
+  date: {
+    $gte: new Date(fromDate),
+    $lte: new Date(toDate),
+  },
+}).populate([
+  { path: "bank" },
+  { path: "category" },
+  { path: "transaction_type" },
+  { path: "payment_type" },
+]);
+  // const typesList = await Transaction.find().populate([
+  //   { path: "bank" },
+  //   { path: "category" },
+  //   { path: "transaction_type" },
+  //   { path: "payment_type" },]);
     
-    console.log("Reach In functio API")
   // 2) Create workbook & worksheet
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Types");

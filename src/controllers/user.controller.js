@@ -5,6 +5,13 @@ import { ApiResponse } from "../utils/apiResponce.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 import { User_detail } from "../models/userDetail.model.js";
+import TransactionType from "../models/transactionType.model.js";
+import PaymentType from "../models/paymentType.model.js";
+import Bank from "../models/bank.model.js";
+import Category from "../models/category,model.js";
+
+
+
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -200,5 +207,37 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUserDetail = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, req.user, "Success"));
 });
+const getUserDashDetail = asyncHandler(async (req,res) => {
+  console.log("reach on dash")
+  const [banks, categories, transactionTypes, paymentTypes] = await Promise.all([
+    Bank.find({ user_master: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean(),
+    Category.find().sort({ createdAt: -1 }).lean(),
+    TransactionType.find().sort({ createdAt: -1 }).lean(),
+    PaymentType.find().sort({ createdAt: -1 }).lean(),
+  ]);
+      if(!transactionTypes || !banks || !categories || !paymentTypes) {
+        return res
+        .status(200)
+        .json(
+          new ApiError(400, "getTransactionTypes Fail", [
+            {  message: "Transaction type not found" },
+          ])
+        );
+      }
+      const data = {
+        banks:banks,
+        categories:categories,
+        transactionTypes:transactionTypes,
+        paymentTypes:paymentTypes
+      }
+      return res
+        .status(201)
+        .json(
+          new ApiResponse(200, data, "TransactionType list retrive")
+        );
 
-export { registerUser, loginUser, logoutUser, getUserDetail };
+})
+
+export { registerUser, loginUser, logoutUser, getUserDetail,getUserDashDetail };
