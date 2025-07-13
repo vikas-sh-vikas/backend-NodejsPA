@@ -10,8 +10,6 @@ import PaymentType from "../models/paymentType.model.js";
 import Bank from "../models/bank.model.js";
 import Category from "../models/category,model.js";
 
-
-
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -19,13 +17,16 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken };
   } catch (error) {
-   return res
-        .status(200)
-        .json(
-          new ApiError(500, "RefreshToken Fail", [
-            {  message: "Something went wrong while generating referesh and access token" },
-          ])
-        );
+    return res
+      .status(200)
+      .json(
+        new ApiError(500, "RefreshToken Fail", [
+          {
+            message:
+              "Something went wrong while generating referesh and access token",
+          },
+        ])
+      );
   }
 };
 
@@ -34,15 +35,13 @@ const registerUser = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    const {
-      user_name,
-      email,
-      full_name,
-      password,
-      mobileNo
-    } = req.body;
+    const { user_name, email, full_name, password, mobileNo } = req.body;
 
-    if ([user_name, email, full_name, password,mobileNo].some((item) => item?.trim() === "")) {
+    if (
+      [user_name, email, full_name, password, mobileNo].some(
+        (item) => item?.trim() === ""
+      )
+    ) {
       return res
         .status(200)
         .json(
@@ -51,7 +50,6 @@ const registerUser = asyncHandler(async (req, res) => {
           ])
         );
     }
-
     const existedUser = await User.findOne({
       $or: [{ user_name }, { email }],
     }).session(session);
@@ -68,33 +66,36 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const profilePic = req.files?.profilepic?.[0];
-    // if (!profilePic) {
-    //   await session.abortTransaction();
-    //   return res
-    //   .status(200)
-    //   .json(
-    //     new ApiError(400, "Register Fail", [
-    //       { message: "No profile picture uploaded" },
-    //     ])
-    //   );
-    // }
-    const result = null;
-    if(profilePic){
-      result = await uploadOnCloudinary(profilePic.buffer, profilePic.originalname);
+    let result = null;
+    if (profilePic) {
+      result = await uploadOnCloudinary(
+        profilePic.buffer,
+        profilePic.originalname
+      );
     }
 
-    const user = await User.create([{
-      user_name,
-      profile_picture: result?.secure_url || "",
-      email,
-      full_name,
-      password,
-      mobileNo
-    }], { session });
+    const user = await User.create(
+      [
+        {
+          user_name,
+          profile_picture: result?.secure_url || "",
+          email,
+          full_name,
+          password,
+          mobileNo,
+        },
+      ],
+      { session }
+    );
 
-    const userDetail = await User_detail.create([{
-      user_master: user[0]._id,
-    }], { session });
+    const userDetail = await User_detail.create(
+      [
+        {
+          user_master: user[0]._id,
+        },
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
     session.endSession();
@@ -104,7 +105,6 @@ const registerUser = asyncHandler(async (req, res) => {
     return res
       .status(201)
       .json(new ApiResponse(200, createdUser, "User registered Successfully"));
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -123,12 +123,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (!user_name && !email) {
     return res
-    .status(200)
-    .json(
-      new ApiError(400, "Login Fail", [
-        { message: "username or email is required" },
-      ])
-    );
+      .status(200)
+      .json(
+        new ApiError(400, "Login Fail", [
+          { message: "username or email is required" },
+        ])
+      );
   }
 
   const user = await User.findOne({
@@ -136,23 +136,21 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    return res.status(200).json(
-      new ApiError(400, "Login Fail",[
-        {  message: "User not found" },
-      ] )
-    ) 
+    return res
+      .status(200)
+      .json(new ApiError(400, "Login Fail", [{ message: "User not found" }]));
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
     return res
-    .status(200)
-    .json(
-      new ApiError(400, "Login Fail", [
-        {  message: "Invalid user credentials" },
-      ])
-    );
+      .status(200)
+      .json(
+        new ApiError(400, "Login Fail", [
+          { message: "Invalid user credentials" },
+        ])
+      );
   }
 
   const { accessToken } = await generateAccessAndRefereshTokens(user._id);
@@ -207,37 +205,39 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUserDetail = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, req.user, "Success"));
 });
-const getUserDashDetail = asyncHandler(async (req,res) => {
-  console.log("reach on dash")
-  const [banks, categories, transactionTypes, paymentTypes] = await Promise.all([
-    Bank.find({ user_master: req.user._id })
-      .sort({ createdAt: -1 })
-      .lean(),
-    Category.find().sort({ createdAt: -1 }).lean(),
-    TransactionType.find().sort({ createdAt: -1 }).lean(),
-    PaymentType.find().sort({ createdAt: -1 }).lean(),
-  ]);
-      if(!transactionTypes || !banks || !categories || !paymentTypes) {
-        return res
-        .status(200)
-        .json(
-          new ApiError(400, "getTransactionTypes Fail", [
-            {  message: "Transaction type not found" },
-          ])
-        );
-      }
-      const data = {
-        banks:banks,
-        categories:categories,
-        transactionTypes:transactionTypes,
-        paymentTypes:paymentTypes
-      }
-      return res
-        .status(201)
-        .json(
-          new ApiResponse(200, data, "TransactionType list retrive")
-        );
+const getUserDashDetail = asyncHandler(async (req, res) => {
+  const [banks, categories, transactionTypes, paymentTypes] = await Promise.all(
+    [
+      Bank.find({ user_master: req.user._id }).sort({ createdAt: -1 }).lean(),
+      Category.find().sort({ createdAt: -1 }).lean(),
+      TransactionType.find().sort({ createdAt: -1 }).lean(),
+      PaymentType.find().sort({ createdAt: -1 }).lean(),
+    ]
+  );
+  if (!transactionTypes || !banks || !categories || !paymentTypes) {
+    return res
+      .status(200)
+      .json(
+        new ApiError(400, "getTransactionTypes Fail", [
+          { message: "Transaction type not found" },
+        ])
+      );
+  }
+  const data = {
+    banks: banks,
+    categories: categories,
+    transactionTypes: transactionTypes,
+    paymentTypes: paymentTypes,
+  };
+  return res
+    .status(201)
+    .json(new ApiResponse(200, data, "TransactionType list retrive"));
+});
 
-})
-
-export { registerUser, loginUser, logoutUser, getUserDetail,getUserDashDetail };
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getUserDetail,
+  getUserDashDetail,
+};
