@@ -24,7 +24,7 @@ router.route("/deleteTransaction").post(verifyJWT, deleteTransaction);
 router.route("/addEditTransaction").post(verifyJWT, addEditTransaction);
 router.route("/selfTransfer").post(verifyJWT, selfTransfer);
 router.route("/addEditCash").post(verifyJWT, addEditCash);
-router.route("/exportUser").get(verifyJWT, exportUser);
+router.route("/exportUser").post(verifyJWT, exportUser);
 router.route("/depositCash").post(verifyJWT, depositCash);
 router.route("/withdrawCash").post(verifyJWT, withdrawCash);
 router.route("/getCashBankAmount").post(verifyJWT, getCashBankAmount);

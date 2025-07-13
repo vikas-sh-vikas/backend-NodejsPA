@@ -9,6 +9,7 @@ import TransactionType from "../models/transactionType.model.js";
 import { User_detail } from "../models/userDetail.model.js";
 import PaymentType from "../models/paymentType.model.js";
 
+
 const getTransaction = asyncHandler(async (req, res) => {
   const { fromDate, toDate } = req.body;
 
@@ -511,8 +512,17 @@ const depositCash = asyncHandler(async (req, res) => {
 const deleteTransaction = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   const { _id } = await req.body;
+  // console.log("transaction_Detail",req.body)
   await session.withTransaction(async () => {
     const transactionDetail = await Transaction.findOne({_id,user_master: req.user._id})
+    if(!transactionDetail){
+                return res
+          .status(200)
+          .json(
+            new ApiError(400, "deleteTransaction Fail", [
+              {  message: "transaction deatil not found" },
+            ]));
+    }
     const transactionType = await TransactionType.findById({_id: transactionDetail.transaction_type})
     const paymentMethod = await PaymentType.findById({_id: transactionDetail.payment_type})
     const cash = await User_detail.findOne({user_master: req.user._id})
@@ -593,7 +603,6 @@ const withdrawCash = asyncHandler(async (req, res) => {
     const bankDetail = await Bank.findOne({ _id: bankId,user_master: req.user._id });
     const cash = await User_detail.findOne({user_master : req.user._id})
     cash.cash_amount = parseFloat(cash.cash_amount) + parseFloat(amount)
-
     if (!bankDetail) {
       return res
       .status(200)
@@ -610,6 +619,14 @@ const withdrawCash = asyncHandler(async (req, res) => {
       .json(
         new ApiError(400, "withdrawCash Fail", [
           {  message: "Invalid amount value" },
+        ]));
+    }
+    if(bankDetail.current_balance < newAmount){
+            return res
+      .status(200)
+      .json(
+        new ApiError(400, "cash balance is low", [
+          {  message: "invalid amount" },
         ]));
     }
     bankDetail.current_balance =
@@ -657,7 +674,7 @@ const exportUser = asyncHandler(async (req, res) => {
     { path: "transaction_type" },
     { path: "payment_type" },]);
     
-    // console.log("object",typesList)
+    console.log("Reach In functio API")
   // 2) Create workbook & worksheet
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Types");
@@ -673,8 +690,8 @@ const exportUser = asyncHandler(async (req, res) => {
     { header: "Description", key: "description", width: 50 },
   ];
 
-  // 4) Make header row bold
-  worksheet.getRow(1).font = { bold: true };
+  //    // console.log("object",typesList)
+// ow(1).font = { bold: true };
 
   // 5) Add your data rows
   typesList.forEach((type) => {

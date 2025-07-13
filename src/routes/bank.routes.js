@@ -9,7 +9,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 //secured routes
-router.route("/getBanks").get(verifyJWT, getBanks);
+router.route("/getBanks").post(verifyJWT, getBanks);
 router.route("/getBankById").post(verifyJWT, getBankById);
 router.route("/addEditBanks").post(verifyJWT, addEditBanks);
 

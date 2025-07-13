@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiErrors.js";
 import Bank from "../models/bank.model.js";
 
 const getBanks = asyncHandler(async (req, res) => {
+  // const reqBody = await req.body;
   const bank = await Bank.find({ user_master: req.user._id }).sort({ createdAt: -1 });
   if(!bank) {
           return res
