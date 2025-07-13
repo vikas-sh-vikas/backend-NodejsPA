@@ -663,7 +663,7 @@ const getCashBankAmount = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, cashBankAmount, "cash found"));
 });
-const exportUser = asyncHandler(async (req, res) => {
+const exportExcelReport = asyncHandler(async (req, res) => {
   // 1) Fetch your data
   const {fromDate,toDate} = await req.body;
   const typesList = await Transaction.find({
@@ -677,15 +677,8 @@ const exportUser = asyncHandler(async (req, res) => {
   { path: "transaction_type" },
   { path: "payment_type" },
 ]);
-  // const typesList = await Transaction.find().populate([
-  //   { path: "bank" },
-  //   { path: "category" },
-  //   { path: "transaction_type" },
-  //   { path: "payment_type" },]);
-    
-  // 2) Create workbook & worksheet
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Types");
+  const worksheet = workbook.addWorksheet("Report");
 
   // 3) Define columns (header text + keys + widths)
   worksheet.columns = [
@@ -731,7 +724,7 @@ const exportUser = asyncHandler(async (req, res) => {
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   );
-  res.setHeader("Content-Disposition", 'attachment; filename="Types.xlsx"');
+  res.setHeader("Content-Disposition", 'attachment; filename="Report.xlsx"');
 
   await workbook.xlsx.write(res);
   res.end();
@@ -742,7 +735,7 @@ export {
   getTransactionById,
   getRecentTransaction,
   addEditTransaction,
-  exportUser,
+  exportExcelReport,
   deleteTransaction,
   selfTransfer,
   addEditCash,
