@@ -21,7 +21,7 @@ const userSchema = new Schema(
     },
     mobileNo: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -33,6 +33,9 @@ const userSchema = new Schema(
       index: true,
     },
     profile_picture: {
+      type: String,
+    },
+    provider: {
       type: String,
     },
     password: {

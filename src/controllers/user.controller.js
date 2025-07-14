@@ -17,16 +17,68 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken };
   } catch (error) {
-    return res
-      .status(200)
-      .json(
-        new ApiError(500, "RefreshToken Fail", [
-          {
-            message:
-              "Something went wrong while generating referesh and access token",
-          },
-        ])
-      );
+    return res.status(200).json(
+      new ApiError(500, "RefreshToken Fail", [
+        {
+          message:
+            "Something went wrong while generating referesh and access token",
+        },
+      ])
+    );
+  }
+};
+// utils/auth.utils.ts
+const registerGoogleUser = async (userData) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { email, full_name, profile_picture, provider } = userData;
+
+    const existedUser = await User.findOne({
+      $or: [{ email }],
+    }).session(session);
+
+    if (existedUser) {
+      await session.abortTransaction();
+      session.endSession();
+      return { error: "Username or Email already exists" };
+    }
+
+    const user = await User.create(
+      [
+        {
+          user_name: email,
+          profile_picture: profile_picture || "",
+          email,
+          provider,
+          full_name,
+          password: "password", // optional or dummy since Google login skips password
+          // mobileNo,
+        },
+      ],
+      { session }
+    );
+
+    await User_detail.create(
+      [
+        {
+          user_master: user[0]._id,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const createdUser = await User.findById(user[0]._id).select("-password");
+
+    return { user: createdUser };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    return { error: error.message };
   }
 };
 
@@ -83,6 +135,7 @@ const registerUser = asyncHandler(async (req, res) => {
           full_name,
           password,
           mobileNo,
+          provider: "credentials",
         },
       ],
       { session }
@@ -119,7 +172,8 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, user_name, password } = req.body;
+  const { email, user_name, password, provider, full_name, profile_picture } =
+    req.body;
 
   if (!user_name && !email) {
     return res
@@ -131,27 +185,56 @@ const loginUser = asyncHandler(async (req, res) => {
       );
   }
 
-  const user = await User.findOne({
+  let user = await User.findOne({
     $or: [{ user_name }, { email }],
   });
 
+  // Handle Google first-time user
+  if (!user && provider === "google") {
+    const result = await registerGoogleUser({
+      email,
+      full_name,
+      profile_picture,
+      provider,
+    });
+
+    if (result.error) {
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "Google Register Fail", [{ message: result.error }])
+        );
+    }
+
+    user = result.user;
+  }
   if (!user) {
     return res
       .status(200)
       .json(new ApiError(400, "Login Fail", [{ message: "User not found" }]));
   }
 
-  const isPasswordValid = await user.isPasswordCorrect(password);
-
-  if (!isPasswordValid) {
-    return res
-      .status(200)
-      .json(
-        new ApiError(400, "Login Fail", [
-          { message: "Invalid user credentials" },
-        ])
-      );
+  if (provider !== "google") {
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "Login Fail", [{ message: "Invalid credentials" }])
+        );
+    }
   }
+  // const isPasswordValid = await user.isPasswordCorrect(password);
+
+  // if (!isPasswordValid && provider !== 'google') {
+  //   return res
+  //     .status(200)
+  //     .json(
+  //       new ApiError(400, "Login Fail", [
+  //         { message: "Invalid user credentials" },
+  //       ])
+  //     );
+  // }
 
   const { accessToken } = await generateAccessAndRefereshTokens(user._id);
 
