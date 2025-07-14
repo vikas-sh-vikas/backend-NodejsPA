@@ -64,6 +64,7 @@ const registerGoogleUser = async (userData) => {
       [
         {
           user_master: user[0]._id,
+          cash_amount: "0",
         },
       ],
       { session }
@@ -145,6 +146,7 @@ const registerUser = asyncHandler(async (req, res) => {
       [
         {
           user_master: user[0]._id,
+          cash_amount: "0",
         },
       ],
       { session }
@@ -186,7 +188,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   let user = await User.findOne({
-    $or: [{ user_name }, { email }],
+    $or: [{ user_name,provider }, { email,provider }],
   });
 
   // Handle Google first-time user

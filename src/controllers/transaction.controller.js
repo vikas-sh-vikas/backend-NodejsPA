@@ -302,15 +302,15 @@ const addEditTransaction = asyncHandler(async (req, res) => {
               {  message: "Cash account not found" },
             ]));
         }
-        if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
-          return res
-          .status(200)
-          .json(
-            new ApiError(400, "addEditTransaction Fail", [
-              {  message: "Cash account can not be negative" },
-            ]));
-        }
-
+        // if (parseFloat(cashAccount.cash_amount) < parseFloat(amount)) {
+        //   return res
+        //   .status(200)
+        //   .json(
+        //     new ApiError(400, "addEditTransaction Fail", [
+        //       {  message: "Cash account can not be negative" },
+        //     ]));
+        // }
+console.log("cash Deposite credit object")
         cashAccount.cash_amount =
           parseFloat(cashAccount.cash_amount) + parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
