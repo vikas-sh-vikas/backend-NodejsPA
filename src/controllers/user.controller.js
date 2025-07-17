@@ -318,11 +318,53 @@ const getUserDashDetail = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(200, data, "TransactionType list retrive"));
 });
+const editUser = asyncHandler(async (req, res) => {
+  const reqBody = await req.body;
+  const { _id, full_name,mobileNo,user_name } = reqBody;
+  //add customer
+  if (_id) {
+    // Find the existing bank entry
+    const existingUser = await User.findById(_id);
+    if (!existingUser) {
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "editUser Fail", [
+            {  message: "User not found" },
+          ])
+        );
+    }
 
+    await User.findByIdAndUpdate(_id, {
+      full_name,mobileNo,user_name
+    });
+    const updatetdUser = await User.findById(_id).select("-password");
+    return res
+      .status(201)
+      .json(
+      new ApiResponse(
+        200,
+        {
+          user: updatetdUser,
+        },
+        "User updated Successfully"
+      ));
+
+  } else {
+      return res
+        .status(200)
+        .json(
+          new ApiError(400, "editUser Fail", [
+            {  message: "User id not found" },
+          ])
+        );
+  }
+});
 export {
   registerUser,
   loginUser,
-  logoutUser,
-  getUserDetail,
+  logoutUser,  
+  getUserDetail,  
   getUserDashDetail,
+  editUser,
 };

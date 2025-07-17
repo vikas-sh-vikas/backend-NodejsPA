@@ -4,7 +4,8 @@ import {
   logoutUser,
   registerUser,
   getUserDetail,
-  getUserDashDetail
+  getUserDashDetail,
+  editUser,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -25,7 +26,8 @@ router.route("/login").post(loginUser);
 //secured routes
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/getUserDetail").post(verifyJWT, getUserDetail);
-router.route("/getUserDashDetail").post(verifyJWT,getUserDashDetail);
+router.route("/getUserDashDetail").post(verifyJWT, getUserDashDetail);
+router.route("/editUser").post(verifyJWT, editUser);
 // router.route("/refresh-token").post(refreshAccessToken);
 // router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 // router.route("/current-user").get(verifyJWT, getCurrentUser);
