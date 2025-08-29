@@ -10,7 +10,7 @@ const categorySchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    created_on: {
+    created_on: { 
       type: Date,
     },
     created_by: {

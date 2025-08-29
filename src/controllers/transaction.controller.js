@@ -310,7 +310,7 @@ const addEditTransaction = asyncHandler(async (req, res) => {
         //       {  message: "Cash account can not be negative" },
         //     ]));
         // }
-console.log("cash Deposite credit object")
+// console.log("cash Deposite credit object")
         cashAccount.cash_amount =
           parseFloat(cashAccount.cash_amount) + parseFloat(amount); // Update the cash balance
         await cashAccount.save({ session });
@@ -500,7 +500,7 @@ const depositCash = asyncHandler(async (req, res) => {
         ]));
     }
     bankDetail.current_balance =
-    parseInt(bankDetail.current_balance) + newAmount;
+    parseFloat(bankDetail.current_balance) + newAmount;
     bankDetail.save({ session });
     cash.save({session})
   });
@@ -630,7 +630,7 @@ const withdrawCash = asyncHandler(async (req, res) => {
         ]));
     }
     bankDetail.current_balance =
-      parseInt(bankDetail.current_balance) - newAmount;
+      parseFloat(bankDetail.current_balance) - newAmount;
     bankDetail.save({ session });
     cash.save({session})
   });

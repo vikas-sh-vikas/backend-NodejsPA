@@ -293,10 +293,10 @@ const getUserDetail = asyncHandler(async (req, res) => {
 const getUserDashDetail = asyncHandler(async (req, res) => {
   const [banks, categories, transactionTypes, paymentTypes] = await Promise.all(
     [
-      Bank.find({ user_master: req.user._id }).sort({ createdAt: -1 }).lean(),
-      Category.find().sort({ createdAt: -1 }).lean(),
-      TransactionType.find().sort({ createdAt: -1 }).lean(),
-      PaymentType.find().sort({ createdAt: -1 }).lean(),
+      Bank.find({ user_master: req.user._id }).sort({ created_on: -1 }).lean(),
+      Category.find().sort({ created_on: -1 }).lean(),
+      TransactionType.find().sort({ created_on: -1 }).lean(),
+      PaymentType.find().sort({ created_on: -1 }).lean(),
     ]
   );
   if (!transactionTypes || !banks || !categories || !paymentTypes) {
